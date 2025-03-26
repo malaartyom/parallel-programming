@@ -1,68 +1,27 @@
 package org.nsu.syspro.parprog.solution;
 
 import org.nsu.syspro.parprog.UserThread;
-import org.nsu.syspro.parprog.external.*;
+import org.nsu.syspro.parprog.external.CompilationEngine;
+import org.nsu.syspro.parprog.external.ExecutionEngine;
+import org.nsu.syspro.parprog.external.ExecutionResult;
+import org.nsu.syspro.parprog.external.MethodID;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static org.nsu.syspro.parprog.solution.BalancerState.L1;
+import static org.nsu.syspro.parprog.solution.BalancerState.L2;
 
 public class SolutionThread extends UserThread {
 
-    /**
-     * Stores the usage count of methods, where the key is the method's {@code id}
-     * and the value is the number of times it has been used.
-     */
-    private static final HashMap<Long, Integer> usages = new HashMap<>();
-
-    /**
-     * Stores compiled methods, where the key is the method's {@code id}
-     * and the value is a {@link CompiledMethod} object representing the compiled version of the method.
-     */
-    private static final HashMap<Long, CompiledMethod> methods = new HashMap<>();
-
-    /**
-     * Contains the {@code id} of methods that have been compiled at level 2 (L2).
-     */
-    private static final HashSet<Long> compiledL2 = new HashSet<>();
 
     /**
      * A thread-safe pool of threads for compiling methods asynchronously.
      * <p>
      */
-    private static final ExecutorService executor = Executors.newCachedThreadPool();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
-    /**
-     * A ReadWriteLock to work with shared resources.
-     */
-    private final static ReadWriteLock lock = new ReentrantReadWriteLock();
-
-    private static final int L1 = 20;
-    private static final int L2 = 900;
-
-
-    /**
-     * Increments the usage count for the specified {@link MethodID}.
-     * <p>
-     * This method updates the {@link #usages} HashMap in a thread-safe manner
-     * using {@link ReadWriteLock} {@link #lock}. If the method ID is not already in the map,
-     * it is initialized with a count of zero before being incremented.
-     * </p>
-     *
-     * @param id the {@link MethodID} whose usage count should be incremented
-     */
-    private void incUsages(MethodID id) {
-        lock.writeLock().lock();
-        try {
-            usages.put(id.id(), usages.getOrDefault(id.id(), 0) + 1);
-        } finally {
-            lock.writeLock().unlock();
-        }
-
-    }
+    private static final BalancerState state = new BalancerState();
 
     public SolutionThread(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r) {
         super(compilationThreadBound, exec, compiler, r);
@@ -70,16 +29,20 @@ public class SolutionThread extends UserThread {
 
     @Override
     public ExecutionResult executeMethod(MethodID id) {
-        incUsages(id);
+        state.incrementUsages(id);
         check(id);
-        if (isCompiled(id)) return exec.execute(getCompiled(id));
+        if (state.checkTimeOfCompilation(id)) {
+            executor.shutdown();
+        }
+        var compiled = state.getCompiled(id);
+        if (compiled.isPresent()) return exec.execute(compiled.get());
         else return exec.interpret(id);
     }
 
     /**
      * Checks if method should be compiled and what level of compilation should be used
      * <p>
-     * This method uses information in {@link #usages} map to check if specified method
+     * This method uses information in {@link #state} to check if specified method
      * needs compilation. If usages of method with {@link #id} more than some constant L1
      * then method checks if higher level of compilation is needed. If so compiler
      * compiles method with given {@link #id} by l2 compiler. Otherwise, checks if
@@ -91,61 +54,20 @@ public class SolutionThread extends UserThread {
      * @param id - the {@link MethodID} which we want to check
      */
     private void check(MethodID id) {
-        lock.writeLock().lock();
-        try {
-            if (usages.get(id.id()) >= L1) {
-                if (usages.get(id.id()) >= L2 && !compiledL2.contains(id.id())) {
-                    compiledL2.add(id.id());
-                    executor.submit(() ->
-                        methods.put(id.id(), compiler.compile_l2(id)));
-                } else if (!methods.containsKey(id.id())) {
-                    methods.put(id.id(), compiler.compile_l1(id));
-                }
-
+        if (state.getUsages(id) >= L1) {
+            if (state.getCompiled(id).isEmpty()) {
+                state.addCompiled(id, compiler.compile_l1(id));
             }
-        } finally {
-            lock.writeLock().unlock();
+            if (state.getUsages(id) >= L2 && !state.isCompiledL2(id)) {
+                state.addCompiledL2(id);
+                executor.submit(() ->
+                {
+                    state.updateCompiling(id);
+                    state.addCompiled(id, compiler.compile_l2(id));
+                    state.deleteCompiling(id);
+                });
+            }
         }
     }
 
-    /**
-     * Returns already compiled method using method id
-     * and {@link #methods} map.
-     * <p>
-     * This method is thread-safe as it uses {@link ReadWriteLock} {@link #lock}
-     *
-     * @param id
-     * @return {@link CompiledMethod}
-     */
-    private CompiledMethod getCompiled(MethodID id) {
-        lock.readLock().lock();
-        try {
-            return methods.get(id.id());
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    /**
-     * This method checks whether specified method is compiled.
-     * For this purpose {@link #methods} map is used.
-     * <p>
-     * Method is thread-safe and uses {@link ReadWriteLock} {@link #lock}.
-     * </p>
-     *
-     * @param id
-     * @return {@code true} if method is compiled, {@code false} if not.
-     */
-    private boolean isCompiled(MethodID id) {
-        lock.readLock().lock();
-        try {
-            return methods.containsKey(id.id());
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-// TODO: add methods
-// TODO: add inner classes
-// TODO: add utility classes in the same package
 }
