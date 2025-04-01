@@ -6,13 +6,15 @@ import org.nsu.syspro.parprog.external.ExecutionResult;
 import org.nsu.syspro.parprog.external.MethodID;
 import org.nsu.syspro.parprog.UserThread;
 
+import java.util.concurrent.ExecutorService;
+
 /**
  * Straightforward solution that always interprets given method.
  */
 public final class Interpreter extends UserThread {
 
-    public Interpreter(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r) {
-        super(compilationThreadBound, exec, compiler, r);
+    public Interpreter(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e) {
+        super(compilationThreadBound, exec, compiler, r, e);
     }
 
     @Override

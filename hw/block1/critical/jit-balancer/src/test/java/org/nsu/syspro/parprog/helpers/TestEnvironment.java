@@ -40,6 +40,8 @@ public class TestEnvironment {
     private final TestExecutor taskExecutor;
     private final ScheduledExecutorService utilityPool;
 
+    private final ExecutorService executorService;
+
     private final long idOnStart = UserThread.firstUnusedThreadNum();
 
     public TestEnvironment(Duration interpret, Duration l1Exec, Duration l2Exec, Duration l1comp, Duration l2comp) {
@@ -51,6 +53,8 @@ public class TestEnvironment {
         for (int i = 0; i < counters.length; i++) {
             counters[i] = new AtomicLong(0);
         }
+
+        executorService = Executors.newCachedThreadPool();
     }
 
     private void inc(EventType type) {
@@ -387,7 +391,7 @@ public class TestEnvironment {
                         running.notify();
                     }
                 }
-            });
+            }, executorService);
 
             synchronized (running) {
                 assert !utilityPool.isShutdown();

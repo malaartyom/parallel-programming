@@ -9,6 +9,7 @@ import org.nsu.syspro.parprog.external.ExecutionEngine;
 import org.nsu.syspro.parprog.solution.SolutionThread;
 
 import java.time.Duration;
+import java.util.concurrent.ExecutorService;
 
 public abstract class TestLevels {
 
@@ -19,11 +20,11 @@ public abstract class TestLevels {
         return 3;
     }
 
-    public static UserThread createUserThread(ExecutionEngine e, CompilationEngine c, Runnable r) {
+    public static UserThread createUserThread(ExecutionEngine e, CompilationEngine c, Runnable r, ExecutorService ex) {
         // return new Interpreter(e, c, r);
         // return new AdaptiveCompiler(e, c, r);
         // return new CachingTopTierJIT(e, c, r);
-        return new SolutionThread(compilationThreadBound(), e, c, r);
+        return new SolutionThread(compilationThreadBound(), e, c, r, ex);
     }
 
     enum Level {

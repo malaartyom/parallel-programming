@@ -6,8 +6,8 @@ import org.nsu.syspro.parprog.external.ExecutionEngine;
 import org.nsu.syspro.parprog.external.ExecutionResult;
 import org.nsu.syspro.parprog.external.MethodID;
 
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.nsu.syspro.parprog.solution.BalancerState.L1;
 import static org.nsu.syspro.parprog.solution.BalancerState.L2;
@@ -19,12 +19,19 @@ public class SolutionThread extends UserThread {
      * A thread-safe pool of threads for compiling methods asynchronously.
      * <p>
      */
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final BalancerState state = new BalancerState();
+    /*
+    Сделал BalancerState не статическим. Внутри все поля статические, кроме usages.
+    Вроде так все работает.
 
-    private static final BalancerState state = new BalancerState();
+    Можно попробовать сделать одно поле статическим, другое нет. Но тогда возникает вопрос:
+    А зачем нужен будет статическое поле? Да, мы будем его обновлять раз в k вызовов state.incrementUsages(id), но когда
+    мы будем использовать информацию оттуда? Ведь во всех местах нам хватает информации и из локального счетчика использований
+     */
 
-    public SolutionThread(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r) {
-        super(compilationThreadBound, exec, compiler, r);
+
+    public SolutionThread(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e) {
+        super(compilationThreadBound, exec, compiler, r, e);
     }
 
     @Override
@@ -33,6 +40,8 @@ public class SolutionThread extends UserThread {
         check(id);
         if (state.checkTimeOfCompilation(id)) {
             executor.shutdown();
+            // Не очень понимаю какие альтернативы. ShutdownNow?
+
         }
         var compiled = state.getCompiled(id);
         if (compiled.isPresent()) return exec.execute(compiled.get());

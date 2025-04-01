@@ -5,14 +5,15 @@ import org.nsu.syspro.parprog.UserThread;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Solution that tries to detect "hot" methods and compile them by l1 JIT.
  */
 public final class AdaptiveCompiler extends UserThread {
 
-    public AdaptiveCompiler(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r) {
-        super(compilationThreadBound, exec, compiler, r);
+    public AdaptiveCompiler(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e) {
+        super(compilationThreadBound, exec, compiler, r, e);
     }
 
     private final Map<Long, Long> hotness = new HashMap<>();

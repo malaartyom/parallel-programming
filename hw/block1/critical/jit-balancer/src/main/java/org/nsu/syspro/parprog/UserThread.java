@@ -9,6 +9,7 @@ import org.nsu.syspro.parprog.external.ExecutionResult;
 import org.nsu.syspro.parprog.external.MethodID;
 import org.nsu.syspro.parprog.solution.SolutionThread;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -31,13 +32,15 @@ public abstract class UserThread extends Thread {
     public final ExecutionEngine exec;
     public final CompilationEngine compiler;
     public final int compilationThreadBound; // should be used for `Thread-bound-compilation` constraint
+    public final ExecutorService executor;
 
-    public UserThread(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r) {
+    public UserThread(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e) {
         super(r);
         this.compilationThreadBound = compilationThreadBound;
         this.exec = exec;
         this.compiler = compiler;
         this.id = idProvider.getAndAdd(1);
+        this.executor = e;
     }
 
     @Override

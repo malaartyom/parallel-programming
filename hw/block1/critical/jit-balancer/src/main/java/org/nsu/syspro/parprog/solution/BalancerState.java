@@ -20,12 +20,12 @@ public class BalancerState {
      * Stores compiled methods, where the key is the method's {@code id}
      * and the value is a {@link CompiledMethod} object representing the compiled version of the method.
      */
-    private final HashMap<Long, CompiledMethod> compiledMethods = new HashMap<>();
+    private static final HashMap<Long, CompiledMethod> compiledMethods = new HashMap<>();
 
     /**
      * Contains the {@code id} of methods that have been compiled by level 2 (L2).
      */
-    private final HashSet<Long> compiledByLevel2 = new HashSet<>();
+    private static final HashSet<Long> compiledByLevel2 = new HashSet<>();
 
     /**
      * This map contains all methods that are compiling at level 2.
@@ -41,7 +41,7 @@ public class BalancerState {
      * пока компиляция под L2 завершится. Что обеспечивает Eventual-per-thread-progress-2
      * </p>
      */
-    private final HashMap<Long, Integer> compiling = new HashMap<>();
+    private static final HashMap<Long, Integer> compiling = new HashMap<>();
 
     /**
      * A ReadWriteLock to work with shared resources.
@@ -185,7 +185,7 @@ public class BalancerState {
      */
 
     public Optional<CompiledMethod> getCompiled(MethodID id) {
-        lock.readLock().lock();
+        lock.writeLock().lock();
         try {
             if (compiling.containsKey(id.id())) {
                 updateCompiling(id);
@@ -193,7 +193,7 @@ public class BalancerState {
             if (!compiledMethods.containsKey(id.id())) return Optional.empty();
             return Optional.of(compiledMethods.get(id.id()));
         } finally {
-            lock.readLock().unlock();
+            lock.writeLock().unlock();
         }
     }
 
@@ -206,6 +206,7 @@ public class BalancerState {
      */
     public void updateCompiling(MethodID id) {
         compiling.put(id.id(), compiling.getOrDefault(id.id(), 0) + 1);
+
     }
 
     /**
@@ -228,6 +229,17 @@ public class BalancerState {
         lock.writeLock().lock();
         try {
             compiling.remove(id.id());
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void syncUsages(HashMap<Long, Integer> localUsages) {
+        lock.writeLock().lock();
+        try {
+            for (Long key : localUsages.keySet()) {
+                usages.put(key, localUsages.get(key));
+            }
         } finally {
             lock.writeLock().unlock();
         }
