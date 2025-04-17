@@ -6,6 +6,7 @@ import org.nsu.syspro.parprog.examples.CachingTopTierJIT;
 import org.nsu.syspro.parprog.examples.Interpreter;
 import org.nsu.syspro.parprog.external.CompilationEngine;
 import org.nsu.syspro.parprog.external.ExecutionEngine;
+import org.nsu.syspro.parprog.solution.BalancerState;
 import org.nsu.syspro.parprog.solution.SolutionThread;
 
 import java.time.Duration;
@@ -20,11 +21,11 @@ public abstract class TestLevels {
         return 3;
     }
 
-    public static UserThread createUserThread(ExecutionEngine e, CompilationEngine c, Runnable r, ExecutorService ex) {
+    public static UserThread createUserThread(ExecutionEngine e, CompilationEngine c, Runnable r, ExecutorService ex, BalancerState b) {
         // return new Interpreter(e, c, r);
         // return new AdaptiveCompiler(e, c, r);
         // return new CachingTopTierJIT(e, c, r);
-        return new SolutionThread(compilationThreadBound(), e, c, r, ex);
+        return new SolutionThread(compilationThreadBound(), e, c, r, ex, b);
     }
 
     enum Level {

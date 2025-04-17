@@ -2,6 +2,7 @@ package org.nsu.syspro.parprog.examples;
 
 import org.nsu.syspro.parprog.external.*;
 import org.nsu.syspro.parprog.UserThread;
+import org.nsu.syspro.parprog.solution.BalancerState;
 
 import java.util.concurrent.ExecutorService;
 
@@ -10,8 +11,8 @@ import java.util.concurrent.ExecutorService;
  */
 public final class CachingTopTierJIT extends UserThread {
 
-    public CachingTopTierJIT(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e) {
-        super(compilationThreadBound, exec, compiler, r, e);
+    public CachingTopTierJIT(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e, BalancerState b) {
+        super(compilationThreadBound, exec, compiler, r, e, b);
     }
 
     private CompiledMethod cache; // thread-private data (private field of UserThread), accessed from `executeMethod` only, no need to use synchronization

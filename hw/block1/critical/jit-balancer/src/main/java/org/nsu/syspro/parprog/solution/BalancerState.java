@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
+// TODO: Передавать в конструктор  (DONE)
 public class BalancerState {
     /**
      * Stores the usage count of methods, where the key is the method's {@code id}
@@ -89,7 +89,7 @@ public class BalancerState {
     public int getUsages(MethodID id) {
         lock.readLock().lock();
         try {
-            return usages.get(id.id());
+            return usages.getOrDefault(id.id(), 0);
         } finally {
             lock.readLock().unlock();
         }
@@ -233,7 +233,15 @@ public class BalancerState {
             lock.writeLock().unlock();
         }
     }
+    public void updateUsages(MethodID id, int localUsages) {
+        lock.writeLock().lock();
+        try {
+            usages.put(id.id(), usages.getOrDefault(id.id(), 0) + localUsages);
+        } finally {
+            lock.writeLock().unlock();
+        }
 
+    }
     public void syncUsages(HashMap<Long, Integer> localUsages) {
         lock.writeLock().lock();
         try {

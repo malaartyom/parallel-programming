@@ -5,6 +5,7 @@ import org.nsu.syspro.parprog.external.ExecutionEngine;
 import org.nsu.syspro.parprog.external.ExecutionResult;
 import org.nsu.syspro.parprog.external.MethodID;
 import org.nsu.syspro.parprog.UserThread;
+import org.nsu.syspro.parprog.solution.BalancerState;
 
 import java.util.concurrent.ExecutorService;
 
@@ -13,8 +14,8 @@ import java.util.concurrent.ExecutorService;
  */
 public final class Interpreter extends UserThread {
 
-    public Interpreter(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e) {
-        super(compilationThreadBound, exec, compiler, r, e);
+    public Interpreter(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e, BalancerState b) {
+        super(compilationThreadBound, exec, compiler, r, e, b);
     }
 
     @Override

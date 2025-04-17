@@ -2,6 +2,7 @@ package org.nsu.syspro.parprog.examples;
 
 import org.nsu.syspro.parprog.external.*;
 import org.nsu.syspro.parprog.UserThread;
+import org.nsu.syspro.parprog.solution.BalancerState;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,8 +13,8 @@ import java.util.concurrent.ExecutorService;
  */
 public final class AdaptiveCompiler extends UserThread {
 
-    public AdaptiveCompiler(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e) {
-        super(compilationThreadBound, exec, compiler, r, e);
+    public AdaptiveCompiler(int compilationThreadBound, ExecutionEngine exec, CompilationEngine compiler, Runnable r, ExecutorService e, BalancerState b) {
+        super(compilationThreadBound, exec, compiler, r, e, b);
     }
 
     private final Map<Long, Long> hotness = new HashMap<>();

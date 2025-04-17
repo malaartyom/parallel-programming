@@ -2,6 +2,7 @@ package org.nsu.syspro.parprog.helpers;
 
 import org.nsu.syspro.parprog.UserThread;
 import org.nsu.syspro.parprog.external.*;
+import org.nsu.syspro.parprog.solution.BalancerState;
 import org.nsu.syspro.parprog.solution.EasyFastTest;
 
 import java.time.Duration;
@@ -41,6 +42,7 @@ public class TestEnvironment {
     private final ScheduledExecutorService utilityPool;
 
     private final ExecutorService executorService;
+    private final BalancerState balancerState;
 
     private final long idOnStart = UserThread.firstUnusedThreadNum();
 
@@ -55,6 +57,7 @@ public class TestEnvironment {
         }
 
         executorService = Executors.newCachedThreadPool();
+        balancerState = new BalancerState();
     }
 
     private void inc(EventType type) {
@@ -391,7 +394,7 @@ public class TestEnvironment {
                         running.notify();
                     }
                 }
-            }, executorService);
+            }, executorService, balancerState);
 
             synchronized (running) {
                 assert !utilityPool.isShutdown();
